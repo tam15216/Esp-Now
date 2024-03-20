@@ -13,9 +13,9 @@ int var_chack = 0;
 /////////////////จอ///////////////////////////////
 LiquidCrystal_I2C lcd(0x27, 20, 4);
 ///////////////////////////////////////////////
-#define SSID "BoogeyMan_2.4GHz"
-#define PASSWORD "xxoo15216zapp"
-#define LINE_TOKEN "g1njoqj78kqjCkiiRrjPzmruByDRQZKkDSbV6Wlk5EW"
+#define SSID "ใส่ชื่อ WIFI ของคุณ"
+#define PASSWORD "ใส่รหัส WIFI ของคุณ"
+#define LINE_TOKEN "ใส่ Token ของคุณ"
 #define Buzzer D0
 typedef struct struct_message {
   int F1;
