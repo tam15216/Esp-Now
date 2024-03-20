@@ -103,19 +103,6 @@ void loop() {
   {
     var_Name = "No Name";
   }
-  /////////////////////////////เเสดงค่าของ MQ-2///////////////////////////////////
-  Serial.print("LPG:");
-  Serial.print(MQGetGasPercentage(MQRead(MQ_PIN) / Ro, GAS_LPG));
-  Serial.print("ppm");
-  Serial.print("    ");
-  Serial.print("CO:");
-  Serial.print(MQGetGasPercentage(MQRead(MQ_PIN) / Ro, GAS_CO));
-  Serial.print("ppm");
-  Serial.print("    ");
-  Serial.print("SMOKE:");
-  Serial.print(MQGetGasPercentage(MQRead(MQ_PIN) / Ro, GAS_SMOKE));
-  Serial.print("ppm");
-  Serial.print("\t");
   /////////////////////FlameSensor//////////////////////////////
   value_FlameSensor = digitalRead(FlameSensor);
   Serial.print("FlameSensor: ");
@@ -139,7 +126,7 @@ void loop() {
   
   delay(100);
 }
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////โค้ดเเปลค่า MQ-2 ให้อยู่ในหน่วยPPM///////////////////////////////////////////////////////
 float MQResistanceCalculation(int raw_adc) {
   return (((float)RL_VALUE * (1023 - raw_adc) / raw_adc));
 }
