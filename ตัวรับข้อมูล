@@ -9,6 +9,7 @@
 #define DHTPIN D7
 #define DHTTYPE DHT22
 DHT dht(DHTPIN, DHTTYPE);
+int var_chack = 0;
 /////////////////จอ///////////////////////////////
 LiquidCrystal_I2C lcd(0x27, 20, 4);
 ///////////////////////////////////////////////
@@ -56,6 +57,7 @@ void setup() {
 }
 
 void loop() {
+  var_chack = myData.chack;
   String var_name = myData.Name;
   float Humidity = dht.readHumidity();
   float Temp = dht.readTemperature();
@@ -109,7 +111,7 @@ void loop() {
     delay(4000);
     ESP.restart();
   }
-  else if (myData.chack == 2){
+  else if (var_chack == 2){
     WiFi.begin(SSID, PASSWORD);
     LINE.setToken(LINE_TOKEN);
     while (WiFi.status() != WL_CONNECTED) {
