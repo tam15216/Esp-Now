@@ -12,13 +12,14 @@ DHT dht(DHTPIN, DHTTYPE);
 /////////////////จอ///////////////////////////////
 LiquidCrystal_I2C lcd(0x27, 20, 4);
 ///////////////////////////////////////////////
-#define SSID "ใส่ชื่อ WiFi ของคุณ"
-#define PASSWORD "ใส่รหัส WiFi ของคุณ"
-#define LINE_TOKEN "ใส่ Token Line ของคุณ"
+#define SSID "BoogeyMan_2.4GHz"
+#define PASSWORD "xxoo15216zapp"
+#define LINE_TOKEN "g1njoqj78kqjCkiiRrjPzmruByDRQZKkDSbV6Wlk5EW"
 #define Buzzer D0
 typedef struct struct_message {
   int F1;
   int M1;
+  int chack;
   String Name;
 } struct_message;
 
@@ -58,7 +59,7 @@ void loop() {
   String var_name = myData.Name;
   float Humidity = dht.readHumidity();
   float Temp = dht.readTemperature();
-/////////////////////////////////////////// ตัวส่งมูล /////////////////////////////////////////////////////
+/////////////////////////////////////////// ตัวส่งมูลตัวที่ 1 /////////////////////////////////////////////////////
   if (myData.F1 == 4) {  // ถ้าข้อมูลที่รับมาเท่ากับ 4  ให้เชื่อมต่อwifi เเล้วเเจ้งเตือนผ่านไลน์
     WiFi.begin(SSID, PASSWORD);
     LINE.setToken(LINE_TOKEN);
@@ -105,6 +106,31 @@ void loop() {
     delay(500);
     digitalWrite(Buzzer, 1);
     LINE.notify(var_name +"เเก๊สรัว");
+    delay(4000);
+    ESP.restart();
+  }
+  else if (myData.chack == 2){
+    WiFi.begin(SSID, PASSWORD);
+    LINE.setToken(LINE_TOKEN);
+    while (WiFi.status() != WL_CONNECTED) {
+      Serial.print(".");
+      lcd.setCursor(2, 0);  // ไปที่ตัวอักษรที่ 0 แถวที่ 1
+      lcd.print("CONNECTED TO WiFi");
+      delay(400);
+    }
+    lcd.setCursor(5, 2);
+    lcd.print("Chack ESP");
+    Serial.printf("\nWiFi connected\nIP : ");
+    Serial.println(WiFi.localIP());
+    LINE.notify(var_name +"ใช้งานได้ปกติ");
+    digitalWrite(Buzzer, 0);
+    delay(500);
+    digitalWrite(Buzzer, 1);
+    delay(500);
+    digitalWrite(Buzzer, 0);
+    delay(500);
+    digitalWrite(Buzzer, 1);
+    LINE.notify(var_name +"ใช้งานได้ปกติ");
     delay(4000);
     ESP.restart();
   }
