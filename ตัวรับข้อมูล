@@ -1,0 +1,158 @@
+#include <ESP8266WiFi.h>
+#include <SPI.h>
+#include <LiquidCrystal_I2C.h>
+#include <Wire.h>
+#include <espnow.h>
+#include <TridentTD_LineNotify.h>
+#include <Adafruit_Sensor.h>
+#include <DHT.h>
+#define DHTPIN D7
+#define DHTTYPE DHT22
+DHT dht(DHTPIN, DHTTYPE);
+/////////////////จอ///////////////////////////////
+LiquidCrystal_I2C lcd(0x27, 20, 4);
+///////////////////////////////////////////////
+#define SSID "ใส่ชื่อ WiFi ของคุณ"
+#define PASSWORD "ใส่รหัส WiFi ของคุณ"
+#define LINE_TOKEN "ใส่ Token Line ของคุณ"
+#define Buzzer D0
+typedef struct struct_message {
+  int F1;
+  int M1;
+  String Name;
+} struct_message;
+
+struct_message myData;
+
+
+void OnDataRecv(uint8_t* mac, uint8_t* incomingData, uint8_t len) {
+  memcpy(&myData, incomingData, sizeof(myData));
+  Serial.print("FlameSensor_1 : ");
+  Serial.print(myData.F1);
+  Serial.print("\t");
+  Serial.print("MQ2_1: ");
+  Serial.print(myData.M1);
+  Serial.print("\t");
+  Serial.print("Name: ");
+  Serial.println(myData.Name);
+}
+
+void setup() {
+  Serial.begin(115200);
+  lcd.begin();
+  lcd.backlight();
+  dht.begin();
+  pinMode(Buzzer, OUTPUT);
+  /////////////////////ESP-NOW/////////////////////////////////////////////////////
+  WiFi.mode(WIFI_AP_STA);
+  if (esp_now_init() != 0) {
+    Serial.println("Error initializing ESP-NOW");
+    return;
+  }
+  esp_now_set_self_role(ESP_NOW_ROLE_SLAVE);
+  esp_now_register_recv_cb(OnDataRecv);
+  ///////////////////////////////////////////////////////////////////////////
+}
+
+void loop() {
+  String var_name = myData.Name;
+  float Humidity = dht.readHumidity();
+  float Temp = dht.readTemperature();
+/////////////////////////////////////////// ตัวส่งมูลตัวที่ 1 /////////////////////////////////////////////////////
+  if (myData.F1 == 4) {  // ถ้าข้อมูลที่รับมาเท่ากับ 4  ให้เชื่อมต่อwifi เเล้วเเจ้งเตือนผ่านไลน์
+    WiFi.begin(SSID, PASSWORD);
+    LINE.setToken(LINE_TOKEN);
+    while (WiFi.status() != WL_CONNECTED) {
+      Serial.print(".");
+      lcd.setCursor(2, 0);  // ไปที่ตัวอักษรที่ 0 แถวที่ 1
+      lcd.print("CONNECTED TO WiFi");
+      delay(400);
+    }
+    lcd.setCursor(5, 2);
+    lcd.print("Fire!");
+    Serial.printf("\nWiFi connected\nIP : ");
+    Serial.println(WiFi.localIP());
+    LINE.notify(var_name +"ไฟไหม้");
+    digitalWrite(Buzzer, 0);
+    delay(500);
+    digitalWrite(Buzzer, 1);
+    delay(500);
+    digitalWrite(Buzzer, 0);
+    delay(500);
+    digitalWrite(Buzzer, 1);
+    LINE.notify(var_name +"ไฟไหม้");
+    delay(4000);
+    ESP.restart();
+  } else if (myData.M1 >= 400) {  // ถ้าเกิดเเก๊สรั่วเกินขีดจัดกัดก็คือ 1000
+    WiFi.begin(SSID, PASSWORD);
+    LINE.setToken(LINE_TOKEN);
+    while (WiFi.status() != WL_CONNECTED) {
+      Serial.print(".");
+      lcd.setCursor(2, 0);  // ไปที่ตัวอักษรที่ 0 แถวที่ 1
+      lcd.print("CONNECTED TO WiFi");
+      delay(400);
+    }
+    lcd.setCursor(5, 2);
+    lcd.print("Gas leak!!!");
+    Serial.printf("\nWiFi connected\nIP : ");
+    Serial.println(WiFi.localIP());
+    LINE.notify(var_name +"เเก๊สรัว");
+    digitalWrite(Buzzer, 0);
+    delay(500);
+    digitalWrite(Buzzer, 1);
+    delay(500);
+    digitalWrite(Buzzer, 0);
+    delay(500);
+    digitalWrite(Buzzer, 1);
+    LINE.notify(var_name +"เเก๊สรัว");
+    delay(4000);
+    ESP.restart();
+  }
+  ////////////////////////////////////////////////////สิ้นสุดตัวส่งข้อมูล/////////////////////////////////////////////////////////
+  else if (Temp >= 54) {
+    WiFi.begin(SSID, PASSWORD);
+    LINE.setToken(LINE_TOKEN);
+    while (WiFi.status() != WL_CONNECTED) {
+      Serial.print(".");
+      lcd.setCursor(2, 0);  // ไปที่ตัวอักษรที่ 0 แถวที่ 1
+      lcd.print("CONNECTED TO WiFi");
+      delay(400);
+    }
+    lcd.setCursor(5, 2);
+    lcd.print("HIGH Temp");
+    Serial.printf("\nWiFi connected\nIP : ");
+    Serial.println(WiFi.localIP());
+    LINE.notify("อุณหภูมิสูงเกินกำหนด");
+    digitalWrite(Buzzer, 0);
+    delay(500);
+    digitalWrite(Buzzer, 1);
+    delay(500);
+    digitalWrite(Buzzer, 0);
+    delay(500);
+    digitalWrite(Buzzer, 1);
+    delay(1000);
+    LINE.notify("อุณหภูมิสูงเกินกำหนด");
+    ESP.restart();
+  }
+  /////////////////////เเสดงค่าของเเก๊สLPG//////////////////////////////////////
+  lcd.setCursor(1, 0);  //กำหนดหลักที่ 4 และแถวที่ 1
+  lcd.print("LPG = ");
+  lcd.setCursor(7, 0);
+  lcd.print(myData.M1);
+  //////////////////////////DHT 22 //////////////////////////////////////////////
+  lcd.setCursor(1, 1);  //กำหนดหลักที่ 4 และแถวที่ 1
+  lcd.print("Humidity = ");
+
+  lcd.setCursor(12, 1);
+  lcd.print(Humidity);
+
+  lcd.setCursor(1, 2);
+  lcd.print("Temp = ");
+
+  lcd.setCursor(8, 2);
+  lcd.print(Temp);
+  digitalWrite(Buzzer, 1);
+  delay(500);
+  lcd.clear();
+  ///////////////////////////////////////////////////////////////////////////
+}
