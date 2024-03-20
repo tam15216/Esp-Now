@@ -45,7 +45,7 @@ float SmokeCurve[3] = { 2.3, 0.53, -0.44 };  //two points are taken from the cur
 float Ro = 10;                               //Ro is initialized to 10 kilo ohms
 
 //mac address ของตัวรับ
-uint8_t broadcastAddress[] = { 0x08, 0xF9, 0xE0, 0x63, 0xD8, 0x1E };
+uint8_t broadcastAddress[] = {"ใส่mac address ของตัวรับ"};
 
 typedef struct struct_message {
   int F1;
