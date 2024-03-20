@@ -90,9 +90,9 @@ void setup() {
 
 void loop() {
   ///////////////////////////////ส่วนของการกำหนดชื่อ////////////////////////////////////////////////
-  int DIF_1 = digitalRead(DIF1);
-  int DIF_2 = digitalRead(DIF2);
-  int buttonChack = digitalRead(button);
+  bool DIF_1 = digitalRead(DIF1);
+  bool DIF_2 = digitalRead(DIF2);
+  bool buttonChack = digitalRead(button);
   if(DIF_1 == 1){
     var_Name = "ESP 1";
   }
