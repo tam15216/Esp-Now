@@ -1,0 +1,189 @@
+// ตัวส่ง ESP8266 com4
+#include <ESP8266WiFi.h>
+#include <espnow.h>
+//////////////////ส่วนของการกำหนดPinเเละตั้งตัวเเปร/////////////////////////
+int FlameSensor = D0;
+int value_FlameSensor = 0;
+int value_MQ2 = 0;
+int DIF1 = D5;
+int DIF2 = D6;
+int button = D7;
+String var_Name;
+/////////////////////////////////////////////////////////////////////
+
+#define MQ_PIN (A0)                 //define which analog input channel you are going to use
+#define RL_VALUE (5)                //define the load resistance on the board, in kilo ohms
+#define RO_CLEAN_AIR_FACTOR (9.83)  //RO_CLEAR_AIR_FACTOR=(Sensor resistance in clean air)/RO, \
+                                    //which is derived from the chart in datasheet
+
+/***********************Software Related Macros************************************/
+#define CALIBARAION_SAMPLE_TIMES (50)      //define how many samples you are going to take in the calibration phase
+#define CALIBRATION_SAMPLE_INTERVAL (500)  //define the time interal(in milisecond) between each samples in the \
+                                           //cablibration phase
+#define READ_SAMPLE_INTERVAL (50)          //define how many samples you are going to take in normal operation
+#define READ_SAMPLE_TIMES (5)              //define the time interal(in milisecond) between each samples in \
+                                           //normal operation
+
+/**********************Application Related Macros**********************************/
+#define GAS_LPG (0)
+#define GAS_CO (1)
+#define GAS_SMOKE (2)
+
+/*****************************Globals***********************************************/
+float LPGCurve[3] = { 2.3, 0.21, -0.47 };    //two points are taken from the curve.
+                                             //with these two points, a line is formed which is "approximately equivalent"
+                                             //to the original curve.
+                                             //data format:{ x, y, slope}; point1: (lg200, 0.21), point2: (lg10000, -0.59)
+float COCurve[3] = { 2.3, 0.72, -0.34 };     //two points are taken from the curve.
+                                             //with these two points, a line is formed which is "approximately equivalent"
+                                             //to the original curve.
+                                             //data format:{ x, y, slope}; point1: (lg200, 0.72), point2: (lg10000,  0.15)
+float SmokeCurve[3] = { 2.3, 0.53, -0.44 };  //two points are taken from the curve.
+                                             //with these two points, a line is formed which is "approximately equivalent"
+                                             //to the original curve.
+                                             //data format:{ x, y, slope}; point1: (lg200, 0.53), point2: (lg10000,  -0.22)
+float Ro = 10;                               //Ro is initialized to 10 kilo ohms
+
+//mac address ของตัวรับ
+uint8_t broadcastAddress[] = { 0x08, 0xF9, 0xE0, 0x63, 0xD8, 0x1E };
+
+typedef struct struct_message {
+  int F1;
+  int M1;
+  String Name;
+} struct_message;
+  struct_message myData;
+
+void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
+  Serial.print("Last Packet Send Status: ");
+  if (sendStatus == 0) {
+    Serial.println("Delivery success");
+  } else {
+    Serial.println("Delivery fail");
+  }
+}
+
+void setup() {
+  pinMode(DIF1, INPUT);
+  pinMode(DIF2, INPUT);
+  pinMode(button, INPUT);
+  Serial.begin(115200);
+  Serial.print("Calibrating...\n");
+  Ro = MQCalibration(MQ_PIN);
+  Serial.print("Calibration is done...\n");
+  Serial.print("Ro=");
+  Serial.print(Ro);
+  Serial.print("kohm");
+  Serial.print("\n");
+  WiFi.mode(WIFI_AP_STA);
+  Serial.println(WiFi.macAddress());
+  if (esp_now_init() != 0) {
+    Serial.println("Error initializing ESP-NOW");
+    return;
+  }
+
+  esp_now_set_self_role(ESP_NOW_ROLE_CONTROLLER);
+  esp_now_register_send_cb(OnDataSent);
+  // Register peer เพิ่ม mac address ของตัวรับ
+  esp_now_add_peer(broadcastAddress, ESP_NOW_ROLE_SLAVE, 1, NULL, 0);
+}
+
+void loop() {
+  ///////////////////////////////ส่วนของการกำหนดชื่อ////////////////////////////////////////////////
+  int DIF_1 = digitalRead(DIF1);
+  int DIF_2 = digitalRead(DIF2);
+  int buttonChack = digitalRead(button);
+  if(DIF_1 == 1){
+    var_Name = "ESP 1";
+  }
+  else if(DIF_2 == 1){
+    var_Name = "ESP 2";
+  }
+  else if(DIF_1 == 0 || DIF_2 == 0 )
+  {
+    var_Name = "No Name";
+  }
+  /////////////////////////////เเสดงค่าของ MQ-2///////////////////////////////////
+  Serial.print("LPG:");
+  Serial.print(MQGetGasPercentage(MQRead(MQ_PIN) / Ro, GAS_LPG));
+  Serial.print("ppm");
+  Serial.print("    ");
+  Serial.print("CO:");
+  Serial.print(MQGetGasPercentage(MQRead(MQ_PIN) / Ro, GAS_CO));
+  Serial.print("ppm");
+  Serial.print("    ");
+  Serial.print("SMOKE:");
+  Serial.print(MQGetGasPercentage(MQRead(MQ_PIN) / Ro, GAS_SMOKE));
+  Serial.print("ppm");
+  Serial.print("\t");
+  /////////////////////FlameSensor//////////////////////////////
+  value_FlameSensor = digitalRead(FlameSensor);
+  Serial.print("FlameSensor: ");
+  Serial.print(value_FlameSensor);
+  Serial.print("\t");
+  /////////////////////MQ-2//////////////////////////////
+  value_MQ2 = MQGetGasPercentage(MQRead(MQ_PIN) / Ro, GAS_LPG) ;
+  Serial.print(" MQ2 : ");
+  Serial.print(value_MQ2);
+  Serial.println("%\t");
+  // Send message via ESP-NOW
+  if(value_MQ2 >= 400 || value_FlameSensor == 0){
+    myData.Name = var_Name;
+    Serial.print(" Name : ");
+    Serial.print(myData.Name);
+    myData.M1 = value_MQ2;
+    myData.F1 = value_FlameSensor + 4;  // ส่งค่าออกไปโดยบวก4เข้าไปเพราะกันบัคที่ตัวรับเนื่องจากหากตัวส่งถ่านหมด ฝั่งตัวรับค่าของF1 จะเป็น 0 ซึ่งเเสดงว่าไฟไหม้
+    esp_now_send(broadcastAddress, (uint8_t *)&myData, sizeof(myData));
+    delay(500);
+  }
+  
+  delay(100);
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+float MQResistanceCalculation(int raw_adc) {
+  return (((float)RL_VALUE * (1023 - raw_adc) / raw_adc));
+}
+
+float MQCalibration(int mq_pin) {
+  int i;
+  float val = 0;
+
+  for (i = 0; i < CALIBARAION_SAMPLE_TIMES; i++) {  //take multiple samples
+    val += MQResistanceCalculation(analogRead(mq_pin));
+    delay(CALIBRATION_SAMPLE_INTERVAL);
+  }
+  val = val / CALIBARAION_SAMPLE_TIMES;  //calculate the average value
+
+  val = val / RO_CLEAN_AIR_FACTOR;  //divided by RO_CLEAN_AIR_FACTOR yields the Ro
+                                    //according to the chart in the datasheet
+
+  return val;
+}
+float MQRead(int mq_pin) {
+  int i;
+  float rs = 0;
+
+  for (i = 0; i < READ_SAMPLE_TIMES; i++) {
+    rs += MQResistanceCalculation(analogRead(mq_pin));
+    delay(READ_SAMPLE_INTERVAL);
+  }
+
+  rs = rs / READ_SAMPLE_TIMES;
+
+  return rs;
+}
+
+int MQGetGasPercentage(float rs_ro_ratio, int gas_id) {
+  if (gas_id == GAS_LPG) {
+    return MQGetPercentage(rs_ro_ratio, LPGCurve);
+  } else if (gas_id == GAS_CO) {
+    return MQGetPercentage(rs_ro_ratio, COCurve);
+  } else if (gas_id == GAS_SMOKE) {
+    return MQGetPercentage(rs_ro_ratio, SmokeCurve);
+  }
+
+  return 0;
+}
+int MQGetPercentage(float rs_ro_ratio, float *pcurve) {
+  return (pow(10, (((log(rs_ro_ratio) - pcurve[1]) / pcurve[2]) + pcurve[0])));
+}
