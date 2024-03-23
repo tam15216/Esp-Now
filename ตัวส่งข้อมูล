@@ -96,6 +96,8 @@ void loop() {
   bool buttonChack = digitalRead(button);
   if(buttonChack == 1){
     myData.chack = 2; //////ให้เท่ากับ 2 เพราะว่ากันบัคที่ฝั่งตัวรับ
+    myData.Name = var_Name;
+    esp_now_send(broadcastAddress, (uint8_t *)&myData, sizeof(myData));
   }
   if(DIF_1 == 1){
     var_Name = "ESP 1";
