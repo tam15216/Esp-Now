@@ -127,7 +127,7 @@ void loop() {
     esp_now_send(broadcastAddress, (uint8_t *)&myData, sizeof(myData));
     delay(500);
   }
-  
+  myData.chack = 0;
   delay(100);
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
