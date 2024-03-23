@@ -127,7 +127,7 @@ void loop() {
     esp_now_send(broadcastAddress, (uint8_t *)&myData, sizeof(myData));
     delay(500);
   }
-  myData.chack = 0;
+  myData.chack = 0; //กันบัคเพื่อไม่ให้ myData.chack เป็น 2 อยู่ตลอดเลยต้องกำหนดให้เท่ากับ 0 ใหม่
   delay(100);
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
