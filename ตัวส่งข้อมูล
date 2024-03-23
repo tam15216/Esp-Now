@@ -5,9 +5,9 @@
 int FlameSensor = D0;
 int value_FlameSensor = 0;
 int value_MQ2 = 0;
-bool DIF1 = D5;
-bool DIF2 = D6;
-bool button = D7;
+int DIF1 = D5;
+int DIF2 = D6;
+int button = D7;
 String var_Name;
 /////////////////////////////////////////////////////////////////////
 
@@ -91,9 +91,9 @@ void setup() {
 
 void loop() {
   ///////////////////////////////ส่วนของการกำหนดชื่อ////////////////////////////////////////////////
-  bool DIF_1 = digitalRead(DIF1);
-  bool DIF_2 = digitalRead(DIF2);
-  bool buttonChack = digitalRead(button);
+  int DIF_1 = digitalRead(DIF1);
+  int DIF_2 = digitalRead(DIF2);
+  int buttonChack = digitalRead(button);
   if(buttonChack == 1){
     myData.chack = 2; //////ให้เท่ากับ 2 เพราะว่ากันบัคที่ฝั่งตัวรับ
     myData.Name = var_Name;
