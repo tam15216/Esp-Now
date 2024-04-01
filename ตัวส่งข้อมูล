@@ -98,8 +98,8 @@ void loop() {
   if(buttonChack == 1){
     myData.chack = 2; //////ให้เท่ากับ 2 เพราะว่ากันบัคที่ฝั่งตัวรับ
     myData.Name = var_Name;
-    myData.F1 = 0;
-    myData.M1 = 0;
+    myData.F1 = 0;  ////ใส่ไว้กันบัค
+    myData.M1 = 0;  ////ใส่ไว้กันบัค
     esp_now_send(broadcastAddress, (uint8_t *)&myData, sizeof(myData));
   }
   if(DIF_1 == 1){
