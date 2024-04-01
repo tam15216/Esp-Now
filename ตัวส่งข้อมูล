@@ -86,18 +86,21 @@ void setup() {
   esp_now_set_self_role(ESP_NOW_ROLE_CONTROLLER);
   esp_now_register_send_cb(OnDataSent);
   // Register peer เพิ่ม mac address ของตัวรับ
-  esp_now_add_peer(broadcastAddress, ESP_NOW_ROLE_SLAVE, 1, NULL, 0); 
+  esp_now_add_peer(broadcastAddress, ESP_NOW_ROLE_SLAVE, 1, NULL, 0);
 }
 
 void loop() {
   ///////////////////////////////ส่วนของการกำหนดชื่อ////////////////////////////////////////////////
+  
   int DIF_1 = digitalRead(DIF1);
   int DIF_2 = digitalRead(DIF2);
   int buttonChack = digitalRead(button);
   if(buttonChack == 1){
     myData.chack = 2; //////ให้เท่ากับ 2 เพราะว่ากันบัคที่ฝั่งตัวรับ
     myData.Name = var_Name;
-    esp_now_send(broadcastAddress, (uint8_t *)&myData, sizeof(myData)); // เป็นคำสั่งเพื่อใช้ส่งค่าออกไปยังบอร์ดตัวรับ
+    myData.F1 = 0;
+    myData.M1 = 0;
+    esp_now_send(broadcastAddress, (uint8_t *)&myData, sizeof(myData));
   }
   if(DIF_1 == 1){
     var_Name = "ESP 1";
@@ -105,7 +108,7 @@ void loop() {
   else if(DIF_2 == 1){
     var_Name = "ESP 2";
   }
-  else if(DIF_1 == 0 || DIF_2 == 0 )
+  else if(DIF_1 == 0 && DIF_2 == 0 )
   {
     var_Name = "No Name";
   }
@@ -126,10 +129,10 @@ void loop() {
     Serial.print(myData.Name);
     myData.M1 = value_MQ2;
     myData.F1 = value_FlameSensor + 4;  // ส่งค่าออกไปโดยบวก4เข้าไปเพราะกันบัคที่ตัวรับเนื่องจากหากตัวส่งถ่านหมด ฝั่งตัวรับค่าของF1 จะเป็น 0 ซึ่งเเสดงว่าไฟไหม้
-    esp_now_send(broadcastAddress, (uint8_t *)&myData, sizeof(myData)); // เป็นคำสั่งเพื่อใช้ส่งค่าออกไปยังบอร์ดตัวรับ
+    esp_now_send(broadcastAddress, (uint8_t *)&myData, sizeof(myData));
     delay(500);
   }
-  myData.chack = 0; //กันบัคเพื่อไม่ให้ myData.chack เป็น 2 อยู่ตลอดเลยต้องกำหนดให้เท่ากับ 0 ใหม่
+  myData.chack = 0;
   delay(100);
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
